@@ -74,7 +74,15 @@ window.onload = function init() {
     //Program - ties back to the shaders
     // name - string specifying the name of the uniform variable
     thetaLoc = gl.getUniformLocation(program, "theta");
-    // console.log(fColorLocation);
+    
+
+    // Grab the slider
+    
+    document.getElementById("slider").onchange = function(event) {
+        delay = 100 - event.target.value;
+    };
+
+
     render();
 
 }
