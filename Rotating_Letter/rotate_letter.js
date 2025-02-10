@@ -7,27 +7,21 @@ var gl;
 
 var theta = 0.0;
 var thetaLoc;
-var delay = 1000;
+var fColorLocation;
+// delay (or n) is the number of frames we load at
+var delay = 10;
 
+//cindex is how we will change the colors
 var cindex = 1.0;
-var index = 0;
-var t;
-//Colors array
-var colors = [
 
-    vec4(0.0, 1.0, 0.0, 1.0),  // black
-    vec4(0.0, 1.0, 0.0, 1.0),  // red
-    vec4(0.0, 1.0, 0.0, 1.0),   // yellow
-    vec4(0.0, 1.0, 0.0, 1.0),   // green
-    vec4(0.0, 1.0, 0.0, 1.0),  // blue
-    vec4(0.0, 1.0, 0.0, 1.0), // magenta
-    vec4(0.0, 1.0, 0.0, 1.0),    // cyan
-    vec4(0.0, 1.0, 0.0, 1.0), 
-];
-var color = vec4(1.0,0.0,0.0,1.0);
+
+
+// r b g values (a will always be 1)
+var r, b, g;
 //Run this once the page has loaded
 window.onload = function init() {
 
+    //Draw canvas
     canvas = document.getElementById("gl-canvas");
 
     gl = WebGLUtils.setupWebGL(canvas);
@@ -54,10 +48,6 @@ window.onload = function init() {
 
 
     // Create a buffer object, initialize it, and associate it with the
-    //  associated attribute variable in our vertex shader
-    console.log(colors[cindex ]);
-    console.log(color);
-
     //load into the GPU
     var bufferID = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, bufferID);
@@ -70,42 +60,77 @@ window.onload = function init() {
     gl.vertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPosition);
 
-    var cBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
-
-    var vColor = gl.getAttribLocation(program, "vColor");
-    gl.vertexAttribPointer(vColor, 3, gl.FLOAT, true, 16, 12);
-    gl.enableVertexAttribArray(vColor);
-  
 
 
 
-    cindex++;
+    // identify location for uniform value fColor
+    // Using uniform because the entire shape (all points) will be the same color
+    fColorLocation = gl.getUniformLocation(program, "fColor");
+
+
 
 
     // returns the location of a specific uniform variable whic is part of webGl
     //Program - ties back to the shaders
     // name - string specifying the name of the uniform variable
     thetaLoc = gl.getUniformLocation(program, "theta");
-
+    // console.log(fColorLocation);
     render();
 
 }
 
 function render() {
-    setTimeout(function () {
-    
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
+    //increase theta to rotate shape
     theta += 0.01;
+    //use timeout for FPS
+    setTimeout(function () {
+        //Concept: switch between different color vecs when cindex increases.
+        if (cindex <= 3) {
+            switch (cindex) {
+                case 0:
+                    r = 1.0;
+                    b = 0.0;
+                    g = 0.0;
+                    break;
+                case 1:
+                    r = 0.0;
+                    b = 1.0;
+                    g = 0.0;
+                    break;
+                case 2:
+                    r = 0.0;
+                    b = 0.0;
+                    g = 1.0;
+                    break;
+            }
+        }
+        else {
+            //reset cindex to start at first r g b vertex;
+            cindex = -1;
+        }
 
-    gl.uniform1f(thetaLoc, theta);
 
-    gl.drawArrays(gl.LINE_STRIP, 0, 7);
-    //setTimeout( render ,delay);
-    window.requestAnimationFrame(render);
-    }, delay);
+        // Clear to buffer bit
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        
+
+        //increase cindex so that we go into different color vector
+        cindex++;
+        // send uniform value to vertex shader
+        gl.uniform1f(thetaLoc, theta);
+        //send uniform value to fragment shader
+        gl.uniform4f(fColorLocation, r, b, g, 1.0);
+
+        //draw the shape
+        gl.drawArrays(gl.LINE_STRIP, 0, 7);
+       
+        //request animation aka render
+        window.requestAnimationFrame(render);
+      
+
+
+
+    }, 1000 / delay);
 
 
 }
